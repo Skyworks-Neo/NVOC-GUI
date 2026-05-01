@@ -1,51 +1,63 @@
+<a id="top"></a>
+
 # NVOC-GUI
 
 > GUI frontend for NVOC-AutoOptimizer — NVIDIA GPU VF Curve Optimizer
 
-## License
+[English](#english) | [中文](#chinese)
+
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
+
+---
+
+<a id="english"></a>
+
+## English
+
+### License
+
 This project is licensed under the [Apache License 2.0](LICENSE).
 
-## Features
+### Features
 
 - **Dashboard** — View GPU info, status (clocks, sensors, coolers, VFP), and current OC settings
 - **Autoscan** — One-click VF curve auto-optimization with Standard / Ultrafast / Legacy modes
 - **Overclock** — Apply clock offsets, power limits, thermal limits, and voltage boost
-- **VF Curve** — Export/import VFP curves (CSV), lock/unlock voltage points, single-point adjustments
+- **VF Curve** — Export/import VFP curves (CSV), lock/unlock voltage points, and adjust single points
 - **Fan Control** — Manual fan speed control with presets and slider
 - **Output Console** — Real-time CLI output display for all operations
 
-## Requirements
+### Requirements
 
 - Python 3.8+
 - Windows 10/11 (64-bit)
-- NVOC-AutoOptimizer built (`../NVOC-Autooptimizer/target/release/nvoc-auto-optimizer.exe`)
+- Built NVOC-AutoOptimizer binary (`../NVOC-Autooptimizer/target/release/nvoc-auto-optimizer.exe`)
 - NVIDIA GPU with compatible drivers
 
-## Setup
+### Setup
 
 ```bash
 uv sync
 uv run python main.py
 ```
 
-## Compile Single Executable (Optional)
+### Compile a Single Executable (Optional)
 
 ```bash
 uv sync --group build
 uv run pyinstaller nvoc_gui.spec
 ```
 
-## Dependency Management
+### Dependency Management
 
-This repo uses `uv` with `pyproject.toml` instead of `requirements.txt`.
+This repository uses `uv` with `pyproject.toml` instead of `requirements.txt`.
 
 - Runtime dependencies use relaxed version ranges.
-- Packages with changing Python support windows use Python-version markers, so each interpreter resolves an appropriate release line.
+- Packages with shifting Python support windows use Python-version markers so each interpreter resolves an appropriate release line.
 - Build-only tooling lives in the `build` dependency group.
-- `uv sync` resolves for the active interpreter. To verify Python 3.8 compatibility specifically, create/sync a Python 3.8 environment first.
+- `uv sync` resolves dependencies for the active interpreter. To verify Python 3.8 compatibility specifically, create or sync a Python 3.8 environment first.
 
-## Directory Structure
+### Directory Structure
 
 ```
 NVOC-GUI/
@@ -53,84 +65,241 @@ NVOC-GUI/
 ├── pyproject.toml              # Project metadata and dependencies
 ├── src/
 │   ├── app.py                  # Main application window
-│   ├── cli_runner.py           # Subprocess wrapper for CLI tool
+│   ├── cli_runner.py           # Subprocess wrapper for the CLI tool
 │   ├── config.py               # JSON config persistence
 │   ├── tabs/
-│   │   ├── dashboard.py        # GPU info & status tab
+│   │   ├── dashboard.py        # GPU info and status tab
 │   │   ├── autoscan.py         # VFP autoscan workflow tab
-│   │   ├── overclock.py        # Clock offset & power limits tab
+│   │   ├── overclock.py        # Clock offset and power limits tab
 │   │   ├── vfcurve.py          # VFP export/import/lock tab
 │   │   └── fan_control.py      # Cooler control tab
 │   └── widgets/
 │       └── output_console.py   # Docked output console widget
 ```
 
-## Usage
+### Usage
 
-1. Launch `uv run python main.py`
+1. Run `uv run python main.py`
 2. The GUI auto-detects `nvoc-auto-optimizer.exe` in `../NVOC-Autooptimizer/target/release/`
-3. Select a GPU from the dropdown (auto-populated via `list` command)
-4. Use tabs to interact with GPU settings
+3. Select a GPU from the dropdown, which is auto-populated via the `list` command
+4. Use the tabs to interact with GPU settings
 
 ### Autoscan Workflow
 
-1. Go to **Autoscan** tab
+1. Open the **Autoscan** tab
 2. Click **Export Init VFP** to save the factory curve
 3. Click **Reset & Unlock VFP** to prepare for scanning
-4. Configure parameters (mode, score threshold, etc.)
-5. Click **Start Autoscan** — output streams to the console in real-time
-6. After scan completes, click **Fix Results** for post-processing
+4. Configure parameters such as mode and score threshold
+5. Click **Start Autoscan** — output streams to the console in real time
+6. After the scan completes, click **Fix Results** for post-processing
 7. Click **Import Final VFP** to apply the optimized curve
 
+### Module Responsibilities
 
-### 2. 各模块职责与主要类/函数
+- **`main.py`**
+  - Purpose: Application entry point; parses arguments, initializes configuration, and launches the main window from `src.app`.
+  - Startup flow: load configuration → initialize the main window → enter the event loop.
 
-- **main.py**
-  - 作用：项目主入口，负责解析参数、初始化配置、启动 `src.app` 的主窗口。
+- **`src/app.py`**
+  - Purpose: Defines the `App` main class, responsible for creating the GUI window and loading/layout of each tab.
+  - Key classes/functions: `App` (main window class), `setup_tabs()` (loads all tabs).
+
+- **`src/cli_runner.py`**
+  - Purpose: Wraps command-line interaction with the external NVOC-AutoOptimizer CLI, handling command construction, process management, and result parsing.
+  - Key classes/functions: `CLIRunner` (CLI interaction class), `run_command()` (executes CLI commands).
+
+- **`src/config.py`**
+  - Purpose: Loads, saves, and validates GUI configuration in JSON format.
+  - Key classes/functions: `ConfigManager` (configuration manager), `load_config()`, `save_config()`.
+
+- **`src/tabs/`**
+  - Purpose: Each `.py` file maps to a feature tab and handles its own UI and business logic.
+    - `dashboard.py`: system overview and live status display.
+    - `autoscan.py`: automatic scanning and detection workflow.
+    - `fan_control.py`: fan speed control and curve settings.
+    - `overclock.py`: overclock parameter configuration and application.
+    - `vfcurve.py`: voltage-frequency curve editing.
+  - Key classes/functions: each file contains a corresponding tab class (for example, `DashboardTab`) that handles UI and events.
+
+- **`src/widgets/`**
+  - Purpose: Reusable custom widgets such as the output console.
+  - Key classes/functions: `OutputConsole` (displays logs and CLI output).
+
+### Startup Flow
+
+1. Run `main.py` and parse command-line arguments such as a config file path.
+2. Load or initialize configuration from `src/config.py`.
+3. Create and display the main window from `src/app.py`.
+4. The main window loads all feature tabs from `src/tabs/`.
+5. User actions trigger business logic, and some actions call the external CLI via `src/cli_runner.py`.
+6. Results are shown through widgets such as `src/widgets/output_console.py`.
+
+### External Integration
+
+- **NVOC-AutoOptimizer CLI tool**
+  - Integration method: `src/cli_runner.py` invokes the CLI as a subprocess, passes arguments, and parses output.
+  - Data flow: GUI collects user input → builds CLI command → executes CLI → parses result → updates the interface.
+  - Dependency handling: the CLI tool must be installed and available in the expected environment; the GUI can also use the CLI path specified in the configuration file.
+
+### Architecture
+
+- **Layered structure**
+  - Presentation layer (UI): `src/app.py`, `src/tabs/`, `src/widgets/`
+  - Business logic layer: `src/cli_runner.py`, `src/config.py`
+  - External dependency layer: NVOC-AutoOptimizer CLI tool
+
+- **Module relationship diagram**
+```
+  [main.py]
+      ↓
+  [src/app.py] ──→ [src/tabs/*] ──→ [src/widgets/*]
+      ↓
+  [src/config.py]
+      ↓
+  [src/cli_runner.py] ──→ [NVOC-AutoOptimizer CLI]
+```
+
+- **Data flow summary**
+  - User action → UI event → business logic processing (local/CLI) → result returned to the UI
+
+### Notes
+
+- New contributors are encouraged to read `main.py`, `src/app.py`, and the files under `src/tabs/` first to understand the main flow and each feature module.
+- Configuration and CLI paths can be customized through `nvoc_gui_config.json` or command-line arguments.
+- To add a new feature tab, create a module under `src/tabs/` and register it in `app.py`.
+
+<a id="chinese"></a>
+
+## Chinese
+
+### 许可证
+
+本项目采用 [Apache License 2.0](LICENSE) 许可。
+
+### 功能
+
+- **Dashboard** — 查看 GPU 信息、状态（核心频率、传感器、风扇、VFP）以及当前超频设置
+- **Autoscan** — 一键自动优化 VF 曲线，支持 Standard / Ultrafast / Legacy 模式
+- **Overclock** — 设置频率偏移、功率限制、温度限制和电压增强
+- **VF Curve** — 导出/导入 VFP 曲线（CSV），锁定/解锁电压点，并支持单点调整
+- **Fan Control** — 使用预设和滑块手动控制风扇转速
+- **Output Console** — 所有操作的 CLI 输出实时展示
+
+### 运行要求
+
+- Python 3.8+
+- Windows 10/11（64 位）
+- 已构建的 NVOC-AutoOptimizer 可执行文件（`../NVOC-Autooptimizer/target/release/nvoc-auto-optimizer.exe`）
+- 安装了兼容驱动的 NVIDIA GPU
+
+### 安装与启动
+
+```bash
+uv sync
+uv run python main.py
+```
+
+### 打包为单文件（可选）
+
+```bash
+uv sync --group build
+uv run pyinstaller nvoc_gui.spec
+```
+
+### 依赖管理
+
+本仓库使用 `uv` + `pyproject.toml`，而不是 `requirements.txt`。
+
+- 运行时依赖使用较宽松的版本范围。
+- 对 Python 支持窗口会变化的包使用 Python 版本标记，确保不同解释器解析到合适的发行版本。
+- 仅用于构建的工具放在 `build` 依赖组中。
+- `uv sync` 会针对当前活动解释器解析依赖。若要专门验证 Python 3.8 兼容性，请先创建或切换到 Python 3.8 环境再同步。
+
+### 目录结构
+
+```
+NVOC-GUI/
+├── main.py                     # 程序入口
+├── pyproject.toml              # 项目元数据与依赖
+├── src/
+│   ├── app.py                  # 主应用窗口
+│   ├── cli_runner.py           # CLI 工具的子进程封装
+│   ├── config.py               # JSON 配置持久化
+│   ├── tabs/
+│   │   ├── dashboard.py        # GPU 信息与状态页签
+│   │   ├── autoscan.py         # VFP 自动扫描工作流页签
+│   │   ├── overclock.py        # 频率偏移与功率限制页签
+│   │   ├── vfcurve.py          # VFP 导出/导入/锁定页签
+│   │   └── fan_control.py      # 风扇控制页签
+│   └── widgets/
+│       └── output_console.py   # 停靠式输出控制台控件
+```
+
+### 使用方法
+
+1. 运行 `uv run python main.py`
+2. GUI 会自动检测 `../NVOC-Autooptimizer/target/release/` 下的 `nvoc-auto-optimizer.exe`
+3. 从下拉框中选择 GPU（会通过 `list` 命令自动填充）
+4. 使用各页签与 GPU 设置交互
+
+### Autoscan 工作流
+
+1. 打开 **Autoscan** 页签
+2. 点击 **Export Init VFP** 保存出厂曲线
+3. 点击 **Reset & Unlock VFP** 为扫描做准备
+4. 配置参数，例如模式和分数阈值
+5. 点击 **Start Autoscan**，输出会实时流式显示到控制台
+6. 扫描完成后点击 **Fix Results** 做后处理
+7. 点击 **Import Final VFP** 应用优化后的曲线
+
+### 模块职责
+
+- **`main.py`**
+  - 作用：项目入口，负责解析参数、初始化配置，并启动 `src.app` 中的主窗口。
   - 启动流程：加载配置 → 初始化主窗口 → 进入事件循环。
 
-- **src/app.py**
-  - 作用：定义 `App` 主类，负责GUI主窗口的创建、各功能页签的加载与布局。
-  - 主要类/函数：`App`（主窗口类），`setup_tabs()`（加载各功能页签）。
+- **`src/app.py`**
+  - 作用：定义 `App` 主类，负责创建 GUI 主窗口以及加载/布局各个页签。
+  - 主要类/函数：`App`（主窗口类），`setup_tabs()`（加载所有页签）。
 
-- **src/cli_runner.py**
-  - 作用：封装与外部 NVOC-AutoOptimizer CLI 工具的命令行交互，负责命令构建、进程管理、结果解析。
-  - 主要类/函数：`CLIRunner`（CLI交互类），`run_command()`（执行CLI命令）。
+- **`src/cli_runner.py`**
+  - 作用：封装与外部 NVOC-AutoOptimizer CLI 工具的命令行交互，负责命令构建、进程管理和结果解析。
+  - 主要类/函数：`CLIRunner`（CLI 交互类），`run_command()`（执行 CLI 命令）。
 
-- **src/config.py**
-  - 作用：负责GUI配置的加载、保存与校验，支持JSON格式配置文件。
+- **`src/config.py`**
+  - 作用：负责 GUI 配置的加载、保存与校验，支持 JSON 格式配置文件。
   - 主要类/函数：`ConfigManager`（配置管理类），`load_config()`，`save_config()`。
 
-- **src/tabs/**
-  - 作用：每个.py文件对应一个功能页签，负责各自业务逻辑与界面。
-    - `dashboard.py`：系统状态总览、实时数据展示。
-    - `autoscan.py`：自动扫描与检测功能。
-    - `fan_control.py`：风扇调速与曲线设置。
-    - `overclock.py`：超频参数设置与应用。
+- **`src/tabs/`**
+  - 作用：每个 `.py` 文件对应一个功能页签，负责各自的业务逻辑与界面。
+    - `dashboard.py`：系统总览与实时状态展示。
+    - `autoscan.py`：自动扫描与检测流程。
+    - `fan_control.py`：风扇转速控制与曲线设置。
+    - `overclock.py`：超频参数配置与应用。
     - `vfcurve.py`：电压-频率曲线编辑。
-  - 主要类/函数：每个文件内有对应的Tab类（如 `DashboardTab`），负责UI与事件处理。
+  - 主要类/函数：每个文件中都有对应的页签类（例如 `DashboardTab`），负责 UI 与事件处理。
 
-- **src/widgets/**
-  - 作用：自定义可复用控件，如输出控制台。
-  - 主要类/函数：`OutputConsole`（输出日志/命令行结果展示）。
+- **`src/widgets/`**
+  - 作用：提供可复用的自定义控件，例如输出控制台。
+  - 主要类/函数：`OutputConsole`（展示日志和 CLI 输出）。
 
-### 3. 主程序启动流程
+### 主程序启动流程
 
-1. 运行 `main.py`，解析命令行参数（如配置文件路径）。
-2. 加载/初始化配置（`src/config.py`）。
-3. 创建并显示主窗口（`src/app.py`）。
-4. 主窗口加载各功能页签（`src/tabs/`）。
-5. 用户操作触发业务逻辑，部分操作通过 `src/cli_runner.py` 调用外部CLI工具。
-6. 结果通过 `src/widgets/output_console.py` 等控件展示。
+1. 运行 `main.py`，解析命令行参数（例如配置文件路径）。
+2. 加载或初始化 `src/config.py` 中的配置。
+3. 创建并显示 `src/app.py` 中的主窗口。
+4. 主窗口加载 `src/tabs/` 下的所有功能页签。
+5. 用户操作触发业务逻辑，部分操作会通过 `src/cli_runner.py` 调用外部 CLI 工具。
+6. 结果会通过 `src/widgets/output_console.py` 等控件显示出来。
 
-### 4. 与外部依赖的集成
+### 与外部依赖的集成
 
 - **NVOC-AutoOptimizer CLI 工具**
-  - 集成方式：通过 `src/cli_runner.py` 以子进程方式调用CLI，传递参数并解析输出。
-  - 数据流：GUI收集用户输入 → 构建CLI命令 → 执行CLI → 解析结果 → 更新界面。
-  - 依赖管理：CLI工具需预先安装并配置好环境变量，GUI通过配置文件指定CLI路径。
+  - 集成方式：`src/cli_runner.py` 以子进程方式调用 CLI，传递参数并解析输出。
+  - 数据流：GUI 收集用户输入 → 构建 CLI 命令 → 执行 CLI → 解析结果 → 更新界面。
+  - 依赖处理：CLI 工具需要预先安装并可在目标环境中访问；GUI 也可以使用配置文件中指定的 CLI 路径。
 
-### 5. 架构分层与模块关系
+### 架构分层与模块关系
 
 - **分层结构**
   - 表现层（UI）：`src/app.py`、`src/tabs/`、`src/widgets/`
@@ -149,10 +318,12 @@ NVOC-GUI/
 ```
 
 - **数据流简述**
-  - 用户操作 → UI事件 → 业务逻辑处理（本地/CLI）→ 结果回传UI
+  - 用户操作 → UI 事件 → 业务逻辑处理（本地/CLI）→ 结果返回 UI
 
-### 进一步说明
+### 补充说明
 
-- 推荐开发者先阅读 `main.py`、`src/app.py` 和各 `src/tabs/` 文件，理解主流程和各功能模块。
-- 配置和CLI路径可通过 `nvoc_gui_config.json` 或命令行参数自定义。
-- 如需扩展功能页签，可在 `src/tabs/` 下新增模块并在 `app.py` 注册。
+- 建议开发者先阅读 `main.py`、`src/app.py` 和 `src/tabs/` 下的文件，以理解主流程和各功能模块。
+- 配置和 CLI 路径可以通过 `nvoc_gui_config.json` 或命令行参数自定义。
+- 如果需要扩展功能页签，可以在 `src/tabs/` 下新增模块并在 `app.py` 中注册。
+
+<p align="right"><a href="#top">Back to top / 返回顶部</a></p>
