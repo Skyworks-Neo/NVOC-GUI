@@ -3,7 +3,7 @@
 > GUI frontend for NVOC-AutoOptimizer — NVIDIA GPU VF Curve Optimizer
 
 ## License
-
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
 This project is licensed under the [Apache License 2.0](LICENSE).
 
 ## Features
